@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        socketThread = SocketThread(true)
+        socketThread = SocketThread(false)
         socketThread!!.start()
         socketThread!!.setHandler(handler)
 

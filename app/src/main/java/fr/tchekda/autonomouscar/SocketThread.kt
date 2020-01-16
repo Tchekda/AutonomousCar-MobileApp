@@ -7,6 +7,7 @@ import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.ConnectException
 import java.net.Socket
+import java.net.SocketException
 
 class SocketThread(private val dev: Boolean = false) : Thread() {
 
@@ -15,7 +16,7 @@ class SocketThread(private val dev: Boolean = false) : Thread() {
 
     override fun run() {
         super.run()
-        val address = if (dev) "192.168.0.48" else "192.168.43.98"
+        val address = if (dev) "192.168.43.101" else "192.168.43.98"
         val socket: Socket
         try {
             socket = Socket(address, 2020)
@@ -29,8 +30,14 @@ class SocketThread(private val dev: Boolean = false) : Thread() {
         val output = socket.getOutputStream()
         writer = PrintWriter(output, true)
         while (true) {
-            text = reader.readLine()
-            handler.sendMessage(handler.obtainMessage(0, text))
+            try {
+                text = reader.readLine()
+                Log.i("Socket", text)
+                handler.sendMessage(handler.obtainMessage(0, text))
+            }catch (e: SocketException){
+                e.printStackTrace()
+                break
+            }
         }
     }
 
