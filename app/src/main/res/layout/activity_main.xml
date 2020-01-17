@@ -59,4 +59,25 @@
         app:layout_constraintStart_toEndOf="@+id/text_speed_text"
         app:layout_constraintTop_toBottomOf="@+id/divider"
         tools:text="0" />
+
+    <TextView
+        android:id="@+id/text_connect_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/connection_label"
+        app:layout_constraintStart_toEndOf="@+id/switch_dev"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/text_connect_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/connection_off"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.529"
+        app:layout_constraintStart_toEndOf="@+id/text_connect_text"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
