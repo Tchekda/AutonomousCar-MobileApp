@@ -3,6 +3,8 @@ package fr.tchekda.autonomouscar
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.view.MotionEvent
+import android.view.View
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
@@ -24,7 +26,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //val dev = true
         initSocket(true)
+        //switch_dev.isChecked = dev
+
 
         switch_dev.setOnCheckedChangeListener { _, isChecked ->
             socketThread?.disconnect()
@@ -34,22 +39,35 @@ class MainActivity : AppCompatActivity() {
 
         bar_speed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val finalSpeed = progress + 116
-                data["speed"] = finalSpeed.toString()
-                data["keep"] = "1"
-                sendData()
+                if (fromUser){
+                    val finalSpeed = progress + 116
+                    data["speed"] = finalSpeed.toString()
+                    data["keep"] = "1"
+                    sendData()
+                }
+
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
-
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-
             }
 
         })
 
+        button_arrow_up.setOnTouchListener(View.OnTouchListener { _, motionEvent ->
+            when (motionEvent.action){
+                MotionEvent.ACTION_DOWN -> {
+                    val speed = receivedData["speed"]!!.toInt()
+                    //toast("Down $speed")
+                }
+                MotionEvent.ACTION_UP -> {
+                    //toast("UP")
+                }
+            }
+            return@OnTouchListener true
+        })
 
     }
 
@@ -76,7 +94,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun handleMessage(msg: Message?) {
             val receivePairs = msg?.obj.toString().split("|")
-            val receiveData: MutableMap<String, String> = HashMap<String, String>()
+            val receiveData: MutableMap<String, String> = HashMap()
             receivePairs.forEach {
                 val split = it.split("=")
                 if (split.size == 2) {
@@ -87,6 +105,7 @@ class MainActivity : AppCompatActivity() {
                 when (key) {
                     "speed" -> {
                         outerClass.get()?.text_speed_data?.text = value
+                        outerClass.get()?.bar_speed?.progress = (value.toInt() - 116)
                     }
                     "connect" -> {
                         if (value.toInt() == 1) {
