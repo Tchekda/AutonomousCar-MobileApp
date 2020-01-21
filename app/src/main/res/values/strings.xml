@@ -5,4 +5,6 @@
     <string name="connection_label">Connection :</string>
     <string name="connection_off">Disconnected</string>
     <string name="connection_on">Connected</string>
+    <string name="keep_speed">Keep Speed</string>
+    <string name="stop">Stop</string>
 </resources>

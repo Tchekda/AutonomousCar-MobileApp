@@ -8,7 +8,9 @@ import android.view.View
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.toast
 import java.lang.ref.WeakReference
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,9 +28,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //val dev = true
         initSocket(true)
-        //switch_dev.isChecked = dev
+        switch_dev.isChecked = true
 
 
         switch_dev.setOnCheckedChangeListener { _, isChecked ->
@@ -39,8 +40,8 @@ class MainActivity : AppCompatActivity() {
 
         bar_speed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser){
-                    val finalSpeed = progress + 116
+                if (fromUser) {
+                    val finalSpeed = progress - 33
                     data["speed"] = finalSpeed.toString()
                     data["keep"] = "1"
                     sendData()
@@ -56,15 +57,78 @@ class MainActivity : AppCompatActivity() {
 
         })
 
+        button_stop.setOnClickListener {
+            data["speed"] = "0"
+            data["keep"] = "0"
+            sendData()
+        }
+
+        val handler = Handler()
+
+        val increaseSpeed: Runnable = object : Runnable {
+            override fun run() {
+                if (receivedData["speed"]!!.toInt() < 92) {
+                    data["speed"] = receivedData["speed"]?.toInt()?.plus(2).toString()
+                    val keep = if (switch_keep.isChecked) "1" else "0"
+                    data["keep"] = keep
+                    sendData()
+                    handler.postDelayed(this, 100)
+                }else if (receivedData["speed"]!!.toInt() == 92){
+                    data["speed"] = receivedData["speed"]!!
+                    val keep = if (switch_keep.isChecked) "1" else "0"
+                    data["keep"] = keep
+                    sendData()
+                    handler.postDelayed(this, 100)
+                }
+            }
+        }
+
+        val decreaseSpeed: Runnable = object : Runnable {
+            override fun run() {
+                if (receivedData["speed"]!!.toInt() > -33) {
+                    data["speed"] = receivedData["speed"]?.toInt()?.minus(2).toString()
+                    val keep = if (switch_keep.isChecked) "1" else "0"
+                    data["keep"] = keep
+                    sendData()
+                    handler.postDelayed(this, 100)
+                }else if (receivedData["speed"]!!.toInt() == -33){
+                    data["speed"] = receivedData["speed"]!!
+                    val keep = if (switch_keep.isChecked) "1" else "0"
+                    data["keep"] = keep
+                    sendData()
+                    handler.postDelayed(this, 100)
+                }
+            }
+        }
+
         button_arrow_up.setOnTouchListener(View.OnTouchListener { _, motionEvent ->
-            when (motionEvent.action){
-                MotionEvent.ACTION_DOWN -> {
-                    val speed = receivedData["speed"]!!.toInt()
-                    //toast("Down $speed")
+            if (socketThread!!.isConnected()) {
+                when (motionEvent.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        handler.postDelayed(increaseSpeed, 100)
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        handler.removeCallbacks(increaseSpeed)
+                    }
                 }
-                MotionEvent.ACTION_UP -> {
-                    //toast("UP")
+            } else {
+                toast("Not connected...")
+            }
+            return@OnTouchListener true
+        })
+
+        button_arrow_down.setOnTouchListener(View.OnTouchListener { _, motionEvent ->
+            if (socketThread!!.isConnected()) {
+                when (motionEvent.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        handler.postDelayed(decreaseSpeed, 100)
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        handler.removeCallbacks(decreaseSpeed)
+                    }
                 }
+            } else {
+                toast("Not connected...")
             }
             return@OnTouchListener true
         })
@@ -76,7 +140,7 @@ class MainActivity : AppCompatActivity() {
         socketThread?.disconnect()
     }
 
-    fun initSocket(dev: Boolean){
+    fun initSocket(dev: Boolean) {
         socketThread = SocketThread(dev)
         socketThread?.start()
         socketThread?.setHandler(handler)
@@ -87,7 +151,6 @@ class MainActivity : AppCompatActivity() {
             socketThread!!.sendMessage(data)
         }.start()
     }
-
 
 
     class MyHandler(private val outerClass: WeakReference<MainActivity>) : Handler() {
@@ -104,8 +167,13 @@ class MainActivity : AppCompatActivity() {
             receiveData.forEach { (key, value) ->
                 when (key) {
                     "speed" -> {
+                        val speed = value.toInt() + 33
                         outerClass.get()?.text_speed_data?.text = value
-                        outerClass.get()?.bar_speed?.progress = (value.toInt() - 116)
+                        outerClass.get()?.bar_speed?.progress = speed
+                    }
+                    "keep" -> {
+                        val keep = value.toInt()
+                        outerClass.get()?.switch_keep?.isChecked = keep == 1
                     }
                     "connect" -> {
                         if (value.toInt() == 1) {

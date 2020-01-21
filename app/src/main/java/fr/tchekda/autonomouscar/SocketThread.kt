@@ -23,7 +23,7 @@ class SocketThread(private val dev: Boolean = false) : Thread() {
 
     override fun run() {
         super.run()
-        val address = if (dev) "192.168.0.48" else "192.168.43.98"
+        val address = if (dev) "192.168.137.75" else "192.168.43.98"
         val port = 2020
         Log.i("Socket", "Initializing $address:$port")
         handler.sendMessage(handler.obtainMessage(0, "connect=0|"))
@@ -95,12 +95,21 @@ class SocketThread(private val dev: Boolean = false) : Thread() {
                     data.forEach { (key, value) ->
                         message += "$key=$value|"
                     }
+                    Log.i("Socket", "Sending : $message")
                     writer?.println(message)
                 }
                 executor.execute(worker)
             }
         }
 
+    }
+
+    fun isConnected(): Boolean {
+        return if (::socket.isInitialized) {
+            !socket.isClosed
+        }else {
+            false
+        }
     }
 
     override fun destroy() {
