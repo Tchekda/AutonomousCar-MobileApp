@@ -46,20 +46,28 @@ class MainActivity : AppCompatActivity() {
                     data["keep"] = "1"
                     sendData()
                 }
-
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-            }
-
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+
+        bar_angle.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    val finalAngle = progress - 90
+                    data["angle"] = finalAngle.toString()
+                    sendData()
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
 
         button_stop.setOnClickListener {
             data["speed"] = "0"
             data["keep"] = "0"
+            data["angle"] = "0"
             sendData()
         }
 
@@ -73,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                     data["keep"] = keep
                     sendData()
                     handler.postDelayed(this, 100)
-                }else if (receivedData["speed"]!!.toInt() == 92){
+                } else if (receivedData["speed"]!!.toInt() == 92) {
                     data["speed"] = receivedData["speed"]!!
                     val keep = if (switch_keep.isChecked) "1" else "0"
                     data["keep"] = keep
@@ -91,10 +99,30 @@ class MainActivity : AppCompatActivity() {
                     data["keep"] = keep
                     sendData()
                     handler.postDelayed(this, 100)
-                }else if (receivedData["speed"]!!.toInt() == -33){
+                } else if (receivedData["speed"]!!.toInt() == -33) {
                     data["speed"] = receivedData["speed"]!!
                     val keep = if (switch_keep.isChecked) "1" else "0"
                     data["keep"] = keep
+                    sendData()
+                    handler.postDelayed(this, 100)
+                }
+            }
+        }
+
+        val rightTurn: Runnable = object : Runnable {
+            override fun run() {
+                if (receivedData["angle"]!!.toInt() < 90) {
+                    data["angle"] = receivedData["angle"]?.toInt()?.plus(2).toString()
+                    sendData()
+                    handler.postDelayed(this, 100)
+                }
+            }
+        }
+
+        val leftTurn: Runnable = object : Runnable {
+            override fun run() {
+                if (receivedData["angle"]!!.toInt() > -90) {
+                    data["angle"] = receivedData["angle"]?.toInt()?.minus(2).toString()
                     sendData()
                     handler.postDelayed(this, 100)
                 }
@@ -125,6 +153,38 @@ class MainActivity : AppCompatActivity() {
                     }
                     MotionEvent.ACTION_UP -> {
                         handler.removeCallbacks(decreaseSpeed)
+                    }
+                }
+            } else {
+                toast("Not connected...")
+            }
+            return@OnTouchListener true
+        })
+
+        button_arrow_left.setOnTouchListener(View.OnTouchListener { _, motionEvent ->
+            if (socketThread!!.isConnected()) {
+                when (motionEvent.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        handler.postDelayed(leftTurn, 100)
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        handler.removeCallbacks(leftTurn)
+                    }
+                }
+            } else {
+                toast("Not connected...")
+            }
+            return@OnTouchListener true
+        })
+
+        button_arrow_right.setOnTouchListener(View.OnTouchListener { _, motionEvent ->
+            if (socketThread!!.isConnected()) {
+                when (motionEvent.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        handler.postDelayed(rightTurn, 100)
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        handler.removeCallbacks(rightTurn)
                     }
                 }
             } else {
@@ -183,6 +243,11 @@ class MainActivity : AppCompatActivity() {
                             outerClass.get()?.text_connect_data?.text =
                                 outerClass.get()?.getString(R.string.connection_off)
                         }
+                    }
+                    "angle" -> {
+                        val angle = value.toInt() + 90
+                        outerClass.get()?.text_angle_data?.text = value
+                        outerClass.get()?.bar_angle?.progress = angle
                     }
                 }
             }
