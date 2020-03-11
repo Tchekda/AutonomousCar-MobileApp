@@ -28,8 +28,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        initSocket(true)
-        switch_dev.isChecked = true
+        initSocket(false)
+        switch_dev.isChecked = false
 
 
         switch_dev.setOnCheckedChangeListener { _, isChecked ->
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         bar_speed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    val finalSpeed = progress - 33
+                    val finalSpeed = progress - 20
                     data["speed"] = finalSpeed.toString()
                     data["keep"] = "1"
                     sendData()
@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         bar_angle.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    val finalAngle = progress - 90
+                    val finalAngle = progress - 40
                     data["angle"] = finalAngle.toString()
                     sendData()
                 }
@@ -75,56 +75,56 @@ class MainActivity : AppCompatActivity() {
 
         val increaseSpeed: Runnable = object : Runnable {
             override fun run() {
-                if (receivedData["speed"]!!.toInt() < 92) {
-                    data["speed"] = receivedData["speed"]?.toInt()?.plus(2).toString()
+                if (socketThread!!.isConnected() && receivedData["speed"]!!.toInt() < 50) {
+                    data["speed"] = receivedData["speed"]?.toInt()?.plus(1).toString()
                     val keep = if (switch_keep.isChecked) "1" else "0"
                     data["keep"] = keep
                     sendData()
-                    handler.postDelayed(this, 100)
-                } else if (receivedData["speed"]!!.toInt() == 92) {
+                    handler.postDelayed(this, 40)
+                } else if (socketThread!!.isConnected() && receivedData["speed"]!!.toInt() == 50) {
                     data["speed"] = receivedData["speed"]!!
                     val keep = if (switch_keep.isChecked) "1" else "0"
                     data["keep"] = keep
                     sendData()
-                    handler.postDelayed(this, 100)
+                    handler.postDelayed(this, 40)
                 }
             }
         }
 
         val decreaseSpeed: Runnable = object : Runnable {
             override fun run() {
-                if (receivedData["speed"]!!.toInt() > -33) {
-                    data["speed"] = receivedData["speed"]?.toInt()?.minus(2).toString()
+                if (receivedData["speed"]!!.toInt() > -20) {
+                    data["speed"] = receivedData["speed"]?.toInt()?.minus(1).toString()
                     val keep = if (switch_keep.isChecked) "1" else "0"
                     data["keep"] = keep
                     sendData()
-                    handler.postDelayed(this, 100)
-                } else if (receivedData["speed"]!!.toInt() == -33) {
+                    handler.postDelayed(this, 40)
+                } else if (receivedData["speed"]!!.toInt() == -20) {
                     data["speed"] = receivedData["speed"]!!
                     val keep = if (switch_keep.isChecked) "1" else "0"
                     data["keep"] = keep
                     sendData()
-                    handler.postDelayed(this, 100)
+                    handler.postDelayed(this, 40)
                 }
             }
         }
 
         val rightTurn: Runnable = object : Runnable {
             override fun run() {
-                if (receivedData["angle"]!!.toInt() < 90) {
+                if (socketThread!!.isConnected() && receivedData["angle"]!!.toInt() < 40) {
                     data["angle"] = receivedData["angle"]?.toInt()?.plus(2).toString()
                     sendData()
-                    handler.postDelayed(this, 100)
+                    handler.postDelayed(this, 40)
                 }
             }
         }
 
         val leftTurn: Runnable = object : Runnable {
             override fun run() {
-                if (receivedData["angle"]!!.toInt() > -90) {
+                if (socketThread!!.isConnected() && receivedData["angle"]!!.toInt() > -40) {
                     data["angle"] = receivedData["angle"]?.toInt()?.minus(2).toString()
                     sendData()
-                    handler.postDelayed(this, 100)
+                    handler.postDelayed(this, 40)
                 }
             }
         }
@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
             if (socketThread!!.isConnected()) {
                 when (motionEvent.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        handler.postDelayed(increaseSpeed, 100)
+                        handler.postDelayed(increaseSpeed, 40)
                     }
                     MotionEvent.ACTION_UP -> {
                         handler.removeCallbacks(increaseSpeed)
@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity() {
             if (socketThread!!.isConnected()) {
                 when (motionEvent.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        handler.postDelayed(decreaseSpeed, 100)
+                        handler.postDelayed(decreaseSpeed, 40)
                     }
                     MotionEvent.ACTION_UP -> {
                         handler.removeCallbacks(decreaseSpeed)
@@ -165,7 +165,7 @@ class MainActivity : AppCompatActivity() {
             if (socketThread!!.isConnected()) {
                 when (motionEvent.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        handler.postDelayed(leftTurn, 100)
+                        handler.postDelayed(leftTurn, 40)
                     }
                     MotionEvent.ACTION_UP -> {
                         handler.removeCallbacks(leftTurn)
@@ -181,7 +181,7 @@ class MainActivity : AppCompatActivity() {
             if (socketThread!!.isConnected()) {
                 when (motionEvent.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        handler.postDelayed(rightTurn, 100)
+                        handler.postDelayed(rightTurn, 40)
                     }
                     MotionEvent.ACTION_UP -> {
                         handler.removeCallbacks(rightTurn)
@@ -227,7 +227,7 @@ class MainActivity : AppCompatActivity() {
             receiveData.forEach { (key, value) ->
                 when (key) {
                     "speed" -> {
-                        val speed = value.toInt() + 33
+                        val speed = value.toInt() + 20
                         outerClass.get()?.text_speed_data?.text = value
                         outerClass.get()?.bar_speed?.progress = speed
                     }
@@ -245,7 +245,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     "angle" -> {
-                        val angle = value.toInt() + 90
+                        val angle = value.toInt() + 40
                         outerClass.get()?.text_angle_data?.text = value
                         outerClass.get()?.bar_angle?.progress = angle
                     }

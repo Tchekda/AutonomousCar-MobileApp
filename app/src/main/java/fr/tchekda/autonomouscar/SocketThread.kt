@@ -78,6 +78,7 @@ class SocketThread(private val dev: Boolean = false) : Thread() {
         if (::socket.isInitialized){
             if (!socket.isClosed) {
                 executor.shutdownNow()
+                @Suppress("ControlFlowWithEmptyBody")
                 while (!executor.isTerminated) {
                 }
                 socket.close()
